@@ -1,5 +1,5 @@
 getwd()
-setwd("../survival")
+setwd("/home/ada/hub/UniversityStudentsCompletionRate_SurvivalAnalysis/notebook/")
 data <- read.table("data.csv")
 
 # EXPLORATORY DATA ANALYSIS
@@ -30,7 +30,7 @@ data_copy$Reasons <-factor(data_copy$Reasons)
 tail(data_copy)
 
 #Survial Analysis
-#install.packages(c("survival", "survminer"))
+install.packages(c("survival", "survminer"))
 
 #loading librarires
 library("survival")
@@ -85,7 +85,7 @@ ggsurvplot(fit, data=data,
                   c("#E7B800", "#2E9FDF"))
 
 
-    #Survdiff for Courses
+#Survdiff for Courses
 fit <- survfit(Surv(time, Status) ~Course, data=data)
 print(fit)
 
@@ -125,3 +125,52 @@ ggsurvplot(fit, data=data,
            surv.median.line = "hv",  
            legend.labs = c("BMCS", "BSSC", "BTRE", "BTAP"),    
            palette = c("#E7B800", "#2E9FDF", "#b6d477", "#d477b9"))
+
+
+#Log-Rank Test  (H0 = there's no diff in survival between the groups. reject h0 if p<0.05)
+# (gender)
+surv_dif <- survdiff(Surv(time, Status) ~Gender, data=data)
+surv_dif
+
+# course
+surv_dif_course <- survdiff(Surv(time, Status) ~Course, data=data)
+surv_dif_course
+
+# reason
+surv_dif_reason <- survdiff(Surv(time, Status) ~Reasons, data=data)
+surv_dif_reason
+
+
+# all 3 variables
+require("survival")
+fit <- survfit( Surv(time, Status) ~ Gender + Course,
+                 data = colon )
+fit
+
+# complex plot(of the 3 variables)
+# Plot survival curves by gender and facet by course and reasons
+ggsurv <- ggsurvplot(fit, fun = "event", conf.int = TRUE,
+                     ggtheme = theme_bw())
+
+ggsurv$plot +theme_bw() + 
+  theme (legend.position = "right")+
+  facet_grid(Course ~ Reasons
+             
+             
+# coxph (simultaneous evaluation of the 3 factors)
+# gender
+res_cox <- coxph(Surv(time, Status) ~ Gender, data = data)
+res_cox
+summary(res_cox) 
+
+# Course
+c_cox <- coxph(Surv(time, Status) ~ Course, data = data)
+c_cox
+summary(c_cox) 
+
+# Reasons
+g_cox <- coxph(Surv(time, Status) ~ Reasons, data = data)
+g_cox
+summary(g_cox) 
+
+#multivariate coxph
