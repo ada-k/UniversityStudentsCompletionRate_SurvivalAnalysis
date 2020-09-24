@@ -1,5 +1,5 @@
 getwd()
-setwd("/home/ada/hub/UniversityStudentsCompletionRate_SurvivalAnalysis/notebook/")
+setwd("..survival")
 data <- read.table("data.csv")
 
 # EXPLORATORY DATA ANALYSIS
