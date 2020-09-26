@@ -1,15 +1,32 @@
+---
+title: "Survival Analysis: University Completion Rate"
+output: html_notebook
+---
+
+Get the current Working directory 
+```{r}
 getwd()
+```
+Set a working directory 
+```{r}
 setwd("C:/Users/lotomej/Desktop/R/degree/survival")
+```
+read a csv
+```{r}
 data <- read.table("data.csv")
+```
 
-# EXPLORATORY DATA ANALYSIS
+EXPLORATORY DATA ANALYSIS
+```{r}
 head(data)
-tail(data)
+```
+```{r}
 summary(data)
+```
 
+Converting courses, Gender and Reasons into categories
+```{r}
 data_copy <- data
-
-#Converting courses, Gender and Reasons into categories
 data_copy$Course[data_copy$Course == 1] = "BMCS"
 data_copy$Course[data_copy$Course == 2] = "BSSC"
 data_copy$Course[data_copy$Course == 3] = "BTRE"
@@ -27,27 +44,46 @@ data_copy$Reasons[data_copy$Reasons == 4] = "Finance"
 data_copy$Reasons[data_copy$Reasons == 5] = "Graduated"
 data_copy$Reasons <-factor(data_copy$Reasons)
 
-tail(data_copy)
+sample(data_copy)
+```
 
 #Survial Analysis
-#install.packages(c("survival", "survminer"))
-
-#loading librarires
+#Insalling the packages needed
+```{r}
+install.packages(c("survival", "survminer"))
+```
+loading librarires
+```{r}
 library("survival")
 library("survminer")
-
+```
+censoring 
+```{r}
 data$time <- data$Year*12
-#Censoring
 data$Status <- ifelse(data$"Year">4, 0, 1)
+```
 
-  #Kaplan-Meir plots
-   #Survdiff for Gender
+# Kaplan-Meir plots
+KM plot for Gender
+```{r}
 fit <- survfit(Surv(time, Status) ~Gender, data=data)
 print(fit)
+```
 
+```{r}
 summary(fit)
+```
+```{r}
 summary(fit)$table
-
+```
+# kaplan-Meier survival estimate
+* n: total number of subjects in each curve.
+* time: the time points on the curve.
+* n.risk: the number of subjects at risk at time t
+* n.event: the number of events that occurred at time t.
+* n.censor: the number of censored subjects, who exit the risk set, without an event, at time t.
+* lower,upper: lower and upper confidence limits for the curve, respectively.
+```{r}
 d <- data.frame(time = fit$time,
                 n.risk = fit$n.risk,
                 n.event = fit$n.event,
@@ -56,8 +92,10 @@ d <- data.frame(time = fit$time,
                 upper = fit$upper,
                 lower = fit$lower
 )
-d
-
+head(d)
+```
+# Visualization of the survival curve for Gender
+```{r}
 ggsurvplot(fit, data=data,
            pval = TRUE, conf.int = TRUE,
            risk.table = TRUE,
@@ -83,15 +121,23 @@ ggsurvplot(fit, data=data,
                   c("Male", "Female"),    
                 palette = 
                   c("#E7B800", "#2E9FDF"))
-
-
-    #Survdiff for Courses
+```
+KM plot for Course Group
+```{r}
 fit <- survfit(Surv(time, Status) ~Course, data=data)
 print(fit)
+```
 
+```{r}
 summary(fit)
-summary(fit)$table
+```
 
+```{r}
+summary(fit)$table
+```
+
+KM Survival Estimate
+```{r}
 d <- data.frame(time = fit$time,
                 n.risk = fit$n.risk,
                 n.event = fit$n.event,
@@ -100,8 +146,11 @@ d <- data.frame(time = fit$time,
                 upper = fit$upper,
                 lower = fit$lower
 )
-d
+head(d)
+```
 
+Visualization
+```{r}
 ggsurvplot(fit, data=data,
            pval = TRUE, conf.int = TRUE,
            risk.table = TRUE, 
@@ -125,54 +174,109 @@ ggsurvplot(fit, data=data,
            surv.median.line = "hv",  
            legend.labs = c("BMCS", "BSSC", "BTRE", "BTAP"),    
            palette = c("#E7B800", "#2E9FDF", "#b6d477", "#d477b9"))
+```
 
-#Log-Rank Test on Gender
+# Log rank Tests 
+Test on Gender Groups
+```{r}
 surv_dif <- survdiff(Surv(time, Status) ~Gender, data=data)
 surv_dif
+```
 
-#Log-Rank Test on Course
+Test on Course Groups
+```{r}
 surv_dif <- survdiff(Surv(time, Status) ~Course, data=data)
 surv_dif
+```
 
-#Log-Rank Test on Reason
+Test on the Reasons
+```{r}
 surv_dif <- survdiff(Surv(time, Status) ~Reasons, data=data)
 surv_dif
+```
 
-#Complex survival curves
+# Complex Survival Curves
+Plot survival curves by sex and facet by rx and adhere
+```{r}
 require("survival")
 fit2 <- survfit( Surv(time, Status) ~ Gender + Course,
                  data = data )
-
-# Plot survival curves by sex and facet by rx and adhere
 ggsurv <- ggsurvplot(fit2, fun = "event", conf.int = TRUE,
                      ggtheme = theme_bw(), data=data)
 
 ggsurv$plot +theme_bw() + 
   theme (legend.position = "right")+
   facet_grid(Gender ~ Course)
+```
 
-
-
-#COX MODEL 
-#Univariate Cox regression
-#Gender
+# COX MODEL 
+Univariate Cox regression
+Gender
+```{r}
 res_cox <- coxph(Surv(time, Status) ~ Gender, data = data)
 res_cox
-
+```
+```{r}
 summary(res_cox)
+```
 
-
-#Course
+Course
+```{r}
 res_cox <- coxph(Surv(time, Status) ~ Course, data = data)
 res_cox
+```
 
+```{r}
 summary(res_cox)
+```
 
-
-#Multivariate Cox regression analysis
+Multivariate Cox regression analysis
+```{r}
 cox_ <- coxph(Surv(time, Status) ~ Age + Gender + Course, data =  data)
 summary(cox_)
+```
 
-# Plot the baseline survival function
-ggsurvplot(survfit(cox_), color = "#2E9FDF", data=data,
+Plot the baseline survival function
+```{r}
+ggsurvplot(survfit(cox_), color = "#3F9FDF", data=data,
            ggtheme = theme_minimal())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
